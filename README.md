@@ -220,3 +220,8 @@ https://github.com/oboikanyego
 # ⭐ Support
 
 If you find this project useful, please consider giving it a ⭐ on GitHub.
+
+<img width="1887" height="841" alt="image" src="https://github.com/user-attachments/assets/ef703a9e-740c-45a0-9b30-a7921e10d323" />
+<img width="1894" height="851" alt="image" src="https://github.com/user-attachments/assets/b16ef84c-8d17-4255-89bb-6e11c90358e0" />
+
+
