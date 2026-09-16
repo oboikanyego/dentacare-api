@@ -31,6 +31,15 @@ async function sendMail({ to, subject, html, text }) {
   });
 }
 
+async function sendBestEffort(operation, label = 'notification') {
+  try {
+    return await operation();
+  } catch (error) {
+    console.error(`${label} failed`, error);
+    return { failed: true, error: error?.message || String(error) };
+  }
+}
+
 async function sendAppointmentBookedEmail(appointment) {
   const subject = 'Your DentaCare appointment is booked';
   const html = `
@@ -46,7 +55,10 @@ async function sendAppointmentBookedEmail(appointment) {
   `;
   const text = `Appointment booked for ${appointment.serviceName} on ${appointment.date} at ${appointment.time}.`;
 
-  return sendMail({ to: appointment.email, subject, html, text });
+  return sendBestEffort(
+    () => sendMail({ to: appointment.email, subject, html, text }),
+    'Appointment booking email'
+  );
 }
 
 async function sendAppointmentCancelledEmail(appointment) {
@@ -63,7 +75,10 @@ async function sendAppointmentCancelledEmail(appointment) {
   `;
   const text = `Appointment for ${appointment.serviceName} on ${appointment.date} at ${appointment.time} was cancelled.`;
 
-  return sendMail({ to: appointment.email, subject, html, text });
+  return sendBestEffort(
+    () => sendMail({ to: appointment.email, subject, html, text }),
+    'Appointment cancellation email'
+  );
 }
 
 async function sendPasswordResetOtpEmail({ name, email, otp }) {
@@ -83,6 +98,7 @@ async function sendPasswordResetOtpEmail({ name, email, otp }) {
 
 module.exports = {
   sendMail,
+  sendBestEffort,
   sendAppointmentBookedEmail,
   sendAppointmentCancelledEmail,
   sendPasswordResetOtpEmail
