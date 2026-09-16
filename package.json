@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
+    "test": "node --test",
+    "check": "node --check src/server.js && node --check src/app.js",
     "build:client": "cd ../client && npm run build",
     "start:full": "npm run build:client && npm run start"
   },
