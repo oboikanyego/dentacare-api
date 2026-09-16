@@ -1,227 +1,126 @@
-
 # 🦷 DentaCare API
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Node.js-Backend-339933?style=for-the-badge&logo=node.js&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Express.js-REST%20API-black?style=for-the-badge&logo=express"/>
-  <img src="https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb"/>
-  <img src="https://img.shields.io/badge/JWT-Authentication-orange?style=for-the-badge"/>
-</p>
+Backend REST API for the DentaCare clinic management platform. It supports patients, reception staff, dentists, and administrators with JWT authentication, role-based authorization, appointment management, user administration, master data, dentist lookup, auditing, email notifications, and Swagger documentation.
 
-<p align="center">
-Backend REST API for the <b>DentaCare Clinic Management System</b>.
-</p>
+## Tech stack
 
----
+- Node.js 20+
+- Express.js
+- MongoDB + Mongoose
+- JWT + bcrypt
+- Nodemailer
+- Swagger / OpenAPI
+- Node built-in test runner
+- GitHub Actions CI
 
-# 📌 Overview
-
-The **DentaCare API** powers the backend services for the DentaCare platform.  
-It provides RESTful endpoints for managing users, authentication, and dental appointments.
-
-The API supports **patients, clinic staff, and administrators**, allowing secure interaction with the system through role-based access control.
-
-This service is consumed by the **Angular frontend application**:
-
-🔗 https://github.com/oboikanyego/dentacare-system
-
----
-
-# 🚀 Features
+## Core capabilities
 
 ### Authentication
-- Secure user registration
-- Login with JWT authentication
+- Patient registration and login
+- JWT-based sessions
 - Role-based access control
-- Forgot password with OTP verification
-- Password reset functionality
+- Profile retrieval
+- Forgot-password OTP and password reset
 
-### Appointment Management
-- Book dental appointments
-- Select dentist and treatment type
-- Prevent overlapping bookings
-- Reschedule appointments
-- Cancel appointments
-- Track appointment status
+### Appointments
+- Public appointment requests
+- Patient-linked appointment creation
+- Protected staff appointment creation
+- Patient and staff rescheduling
+- Patient and staff cancellation
+- Clinic-hours validation
+- Dentist overlap protection
+- Patient double-booking protection
+- Appointment audit trail
+- Best-effort booking/cancellation email notifications
 
-### User Management
-- Create patient accounts
-- Activate or deactivate users
-- Admin user management
-- Role-based permissions
+### Administration
+- List users
+- Create staff accounts
+- Update user details and roles
+- Activate/deactivate users
+- Master-data endpoints
+- Dentist directory
 
-### Validation Rules
-- Prevent booking in the past
-- Prevent dentist double bookings
-- Prevent patient duplicate bookings
-- Respect clinic working hours
+## Local setup
 
----
-
-# 🧰 Tech Stack
-
-| Technology | Purpose |
-|-----------|--------|
-| Node.js | Backend runtime |
-| Express.js | REST API framework |
-| MongoDB | Database |
-| Mongoose | ODM for MongoDB |
-| JWT | Authentication |
-| Nodemailer | Email service (OTP / password reset) |
-| Cloudinary | File storage |
-| Swagger | API documentation |
-
----
-
-# 📂 Project Structure
-
-```
-dentacare-api
-│
-├── src
-│   ├── config
-│   ├── middleware
-│   ├── models
-│   ├── routes
-│   ├── services
-│   └── utils
-│
-├── server.js
-├── app.js
-├── package.json
-├── package-lock.json
-├── .gitignore
-└── README.md
-```
-
----
-
-# ⚙ Environment Configuration
-
-Create a `.env` file in the root of the project.
-
-Example:
-
-```
-PORT=3000
-
-MONGO_URI=mongodb://localhost:27017/dentacare
-
-JWT_SECRET=your_secret_key
-
-EMAIL_HOST=smtp.mailtrap.io
-EMAIL_PORT=2525
-EMAIL_USER=your_email_user
-EMAIL_PASS=your_email_password
-
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-```
-
-⚠️ Never commit `.env` files to Git.
-
----
-
-# ▶ Running the API
-
-### Install dependencies
-
-```
+```bash
+cp .env.example .env
 npm install
-```
-
-### Start development server
-
-```
 npm run dev
 ```
 
-### Start production server
+Required environment variables:
 
-```
-npm start
-```
-
-Server runs on:
-
-```
-http://localhost:3000
+```env
+MONGO_URI=mongodb://localhost:27017/dentacare
+JWT_SECRET=replace-with-a-long-random-secret
 ```
 
----
+Optional configuration is documented in `.env.example`, including `PORT`, `JWT_EXPIRES_IN`, `CORS_ORIGIN`, Gmail app-password settings, and Cloudinary settings.
 
-# 📡 API Endpoints (Example)
+The API fails fast at startup when `MONGO_URI` or `JWT_SECRET` is missing and handles `SIGINT`/`SIGTERM` with a graceful server and MongoDB shutdown.
+
+## Useful URLs
+
+When running locally on the default port:
+
+- API health: `http://localhost:3000/api/health`
+- Swagger UI: `http://localhost:3000/api-docs`
+
+## Main endpoints
 
 ### Authentication
 
-| Method | Endpoint | Description |
-|------|------|-------------|
-POST | /api/auth/register | Register new user |
-POST | /api/auth/login | Login user |
-POST | /api/auth/forgot-password | Request password reset |
-POST | /api/auth/reset-password | Reset password |
-
----
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| POST | `/api/auth/register` | Public |
+| POST | `/api/auth/login` | Public |
+| POST | `/api/auth/forgot-password` | Public |
+| POST | `/api/auth/reset-password` | Public |
+| GET | `/api/auth/profile` | Authenticated |
 
 ### Appointments
 
-| Method | Endpoint | Description |
-|------|------|-------------|
-GET | /api/appointments | Get all appointments |
-POST | /api/appointments | Create appointment |
-PUT | /api/appointments/:id | Update appointment |
-DELETE | /api/appointments/:id | Cancel appointment |
-
----
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| POST | `/api/appointments` | Public / optional auth |
+| POST | `/api/appointments/mine` | Patient |
+| GET | `/api/appointments/mine` | Patient |
+| PATCH | `/api/appointments/mine/:id` | Patient |
+| PATCH | `/api/appointments/mine/:id/cancel` | Patient |
+| GET | `/api/appointments` | Staff/Admin |
+| POST | `/api/appointments/staff` | Staff/Admin |
+| PATCH | `/api/appointments/:id` | Staff/Admin |
+| PATCH | `/api/appointments/:id/cancel` | Staff/Admin |
 
 ### Users
 
-| Method | Endpoint | Description |
-|------|------|-------------|
-GET | /api/users | Get users |
-PUT | /api/users/:id/status | Activate / deactivate user |
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| GET | `/api/users` | Admin |
+| POST | `/api/users` | Admin |
+| PATCH | `/api/users/:id` | Admin |
+| PATCH | `/api/users/:id/status` | Admin |
+| DELETE | `/api/users/:id` | Admin (soft deactivate) |
 
----
+## Testing and CI
 
-# 🔐 Authentication
+Run locally:
 
-Protected routes require a **JWT token**.
-
-Example header:
-
-```
-Authorization: Bearer <token>
-```
-
----
-
-# 📘 API Documentation
-
-Swagger documentation is available at:
-
-```
-http://localhost:3000/api/docs
+```bash
+npm run check
+npm test
 ```
 
----
+GitHub Actions runs dependency installation, syntax validation, and the API test suite on pull requests and pushes to `main`.
 
-# 👨‍💻 Author
+Current automated coverage includes health checks, required environment validation, appointment-creation policy protection, and notification-resilience behavior.
 
-Developed by:
+## Frontend
 
-**BK Oboikanyego Radipabe**
+Angular client: https://github.com/oboikanyego/dentacare-system
 
-GitHub  
-https://github.com/oboikanyego
+## Author
 
----
-
-# ⭐ Support
-
-If you find this project useful, please consider giving it a ⭐ on GitHub.
-
-<img width="1887" height="841" alt="image" src="https://github.com/user-attachments/assets/ef703a9e-740c-45a0-9b30-a7921e10d323" />
-<img width="1894" height="851" alt="image" src="https://github.com/user-attachments/assets/b16ef84c-8d17-4255-89bb-6e11c90358e0" />
-
-
+BK Oboikanyego Radipabe
