@@ -12,6 +12,7 @@ const auditEntrySchema = new mongoose.Schema(
 
 const appointmentSchema = new mongoose.Schema(
   {
+    sampleKey: { type: String, default: null, index: true, sparse: true },
     patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     patientName: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, lowercase: true },

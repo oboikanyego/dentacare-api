@@ -1,22 +1,23 @@
 const bcrypt = require('bcryptjs');
 const MasterData = require('../models/MasterData');
 const User = require('../models/User');
+const { samplePassword, sampleUsers } = require('./sample-users');
 
 const masterDataSeed = [
   {
     key: 'services',
-    description: 'Fictional demo dental services',
+    description: 'Dental services available for booking',
     items: [
-      { value: 'consultation', label: 'Demo Dental Consultation', sortOrder: 1 },
-      { value: 'cleaning', label: 'Demo Teeth Cleaning', sortOrder: 2 },
-      { value: 'whitening', label: 'Demo Teeth Whitening', sortOrder: 3 },
-      { value: 'fillings', label: 'Demo Dental Fillings', sortOrder: 4 },
-      { value: 'braces', label: 'Demo Braces Consultation', sortOrder: 5 }
+      { value: 'consultation', label: 'Dental Consultation', sortOrder: 1 },
+      { value: 'cleaning', label: 'Teeth Cleaning', sortOrder: 2 },
+      { value: 'whitening', label: 'Teeth Whitening', sortOrder: 3 },
+      { value: 'fillings', label: 'Dental Fillings', sortOrder: 4 },
+      { value: 'braces', label: 'Braces Consultation', sortOrder: 5 }
     ]
   },
   {
     key: 'timeSlots',
-    description: 'Demo bookable time slots',
+    description: 'Bookable time slots',
     items: [
       { value: '09:00', label: '09:00', sortOrder: 1 },
       { value: '09:30', label: '09:30', sortOrder: 2 },
@@ -37,11 +38,11 @@ const masterDataSeed = [
   },
   {
     key: 'branches',
-    description: 'Fictional demo clinic branches',
+    description: 'Clinic branches',
     items: [
-      { value: 'rosebank', label: 'Demo Rosebank Clinic', sortOrder: 1 },
-      { value: 'sandton', label: 'Demo Sandton Clinic', sortOrder: 2 },
-      { value: 'midrand', label: 'Demo Midrand Clinic', sortOrder: 3 }
+      { value: 'rosebank', label: 'Rosebank Clinic', sortOrder: 1 },
+      { value: 'sandton', label: 'Sandton Clinic', sortOrder: 2 },
+      { value: 'midrand', label: 'Midrand Clinic', sortOrder: 3 }
     ]
   },
   {
@@ -57,14 +58,14 @@ const masterDataSeed = [
   },
   {
     key: 'dentists',
-    description: 'Fictional demo dentists available for booking selections',
+    description: 'Dentists available for website display and booking selections',
     items: [
       {
         value: 'dentist-1',
-        label: 'Dr. Maya Vale (Demo)',
+        label: 'Dr. Maya Vale',
         sortOrder: 1,
         metadata: {
-          specialization: 'Demo Family Dentistry',
+          specialization: 'Family Dentistry',
           email: 'maya.vale@dentacare.example',
           phone: '+27 10 000 0101',
           image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80'
@@ -72,10 +73,10 @@ const masterDataSeed = [
       },
       {
         value: 'dentist-2',
-        label: 'Dr. Theo Lane (Demo)',
+        label: 'Dr. Theo Lane',
         sortOrder: 2,
         metadata: {
-          specialization: 'Demo Restorative Dentistry',
+          specialization: 'Restorative Dentistry',
           email: 'theo.lane@dentacare.example',
           phone: '+27 10 000 0102',
           image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=800&q=80'
@@ -83,10 +84,10 @@ const masterDataSeed = [
       },
       {
         value: 'dentist-3',
-        label: 'Dr. Zuri Hart (Demo)',
+        label: 'Dr. Zuri Hart',
         sortOrder: 3,
         metadata: {
-          specialization: 'Demo Cosmetic Dentistry',
+          specialization: 'Cosmetic Dentistry',
           email: 'zuri.hart@dentacare.example',
           phone: '+27 10 000 0103',
           image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=800&q=80'
@@ -116,44 +117,55 @@ async function seedMasterData() {
   }
 }
 
-async function seedAdmin() {
-  const defaultDemoEmail = 'admin@dentacare.example';
-  const email = (process.env.SEED_ADMIN_EMAIL || defaultDemoEmail).toLowerCase();
+async function seedSampleUsers() {
+  const hashedPassword = await bcrypt.hash(process.env.SAMPLE_USER_PASSWORD || samplePassword, 10);
 
-  if (!process.env.SEED_ADMIN_EMAIL) {
-    const legacySeedAdmin = await User.findOne({ email: 'admin@dentacare.com' });
-    const demoAdmin = await User.findOne({ email: defaultDemoEmail });
-
-    if (legacySeedAdmin && !demoAdmin) {
-      legacySeedAdmin.name = 'DentaCare Demo Admin';
-      legacySeedAdmin.email = defaultDemoEmail;
-      legacySeedAdmin.idNumber = '9001015009087';
-      await legacySeedAdmin.save();
-      return;
-    }
+  for (const user of sampleUsers) {
+    await User.updateOne(
+      { email: user.email },
+      {
+        $set: {
+          ...user,
+          password: hashedPassword,
+          isActive: true,
+          resetPasswordOtp: null,
+          resetPasswordOtpExpiresAt: null
+        }
+      },
+      { upsert: true }
+    );
   }
+}
 
-  const existing = await User.findOne({ email });
-  if (existing) {
+async function seedConfiguredAdmin() {
+  if (!process.env.SEED_ADMIN_EMAIL) {
     return;
   }
 
-  const password = process.env.SEED_ADMIN_PASSWORD || 'Admin123!';
-  const hashed = await bcrypt.hash(password, 10);
+  const email = process.env.SEED_ADMIN_EMAIL.toLowerCase();
+  const password = process.env.SEED_ADMIN_PASSWORD || samplePassword;
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  await User.create({
-    name: process.env.SEED_ADMIN_NAME || 'DentaCare Demo Admin',
-    email,
-    password: hashed,
-    role: 'ADMIN',
-    isActive: true,
-    idNumber: process.env.SEED_ADMIN_ID_NUMBER || '9001015009087'
-  });
+  await User.updateOne(
+    { email },
+    {
+      $set: {
+        name: process.env.SEED_ADMIN_NAME || 'Clinic Admin',
+        email,
+        password: hashedPassword,
+        role: 'ADMIN',
+        isActive: true,
+        idNumber: process.env.SEED_ADMIN_ID_NUMBER || '8001015009087'
+      }
+    },
+    { upsert: true }
+  );
 }
 
 async function runSeed() {
   await seedMasterData();
-  await seedAdmin();
+  await seedSampleUsers();
+  await seedConfiguredAdmin();
 }
 
-module.exports = { runSeed };
+module.exports = { masterDataSeed, sampleUsers, runSeed, seedSampleUsers };
