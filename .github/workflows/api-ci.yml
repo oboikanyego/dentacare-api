@@ -52,3 +52,5 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+# One-time formatting sweep; remove write permission before merge.
