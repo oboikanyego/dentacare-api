@@ -28,14 +28,12 @@ router.post('/', authenticate, authorize('ADMIN'), async (req, res) => {
     const normalizedEmail = email.toLowerCase();
     const existingUser = await User.findOne({ $or: [{ email: normalizedEmail }, { idNumber }] });
     if (existingUser) {
-      return res
-        .status(409)
-        .json({
-          message:
-            existingUser.email === normalizedEmail
-              ? 'A user with this email already exists'
-              : 'A user with this ID number already exists'
-        });
+      return res.status(409).json({
+        message:
+          existingUser.email === normalizedEmail
+            ? 'A user with this email already exists'
+            : 'A user with this ID number already exists'
+      });
     }
 
     const hashed = await bcrypt.hash(password, 10);
@@ -49,12 +47,10 @@ router.post('/', authenticate, authorize('ADMIN'), async (req, res) => {
       isActive: isActive ?? true
     });
 
-    return res
-      .status(201)
-      .json({
-        message: 'User created successfully',
-        user: { ...user.toObject(), password: undefined }
-      });
+    return res.status(201).json({
+      message: 'User created successfully',
+      user: { ...user.toObject(), password: undefined }
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

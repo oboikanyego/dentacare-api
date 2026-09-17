@@ -40,14 +40,12 @@ router.post('/register', async (req, res) => {
     const normalizedEmail = email.toLowerCase();
     const existingUser = await User.findOne({ $or: [{ email: normalizedEmail }, { idNumber }] });
     if (existingUser) {
-      return res
-        .status(409)
-        .json({
-          message:
-            existingUser.email === normalizedEmail
-              ? 'A user with this email already exists'
-              : 'A user with this ID number already exists'
-        });
+      return res.status(409).json({
+        message:
+          existingUser.email === normalizedEmail
+            ? 'A user with this email already exists'
+            : 'A user with this ID number already exists'
+      });
     }
 
     const hashed = await bcrypt.hash(password, 10);
