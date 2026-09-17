@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
+const { buildCorsOptions } = require('./config/cors');
 const { sanitizeAppointmentCreationStatus } = require('./middleware/appointment-policy');
 
 const authRoutes = require('./routes/auth.routes');
@@ -14,9 +15,8 @@ const dentistRoutes = require('./routes/dentist.routes');
 
 const app = express();
 const clientDistPath = path.resolve(__dirname, '../../client/dist/dentacare-angular/browser');
-const corsOrigin = process.env.CORS_ORIGIN || '*';
 
-app.use(cors({ origin: corsOrigin === '*' ? true : corsOrigin, credentials: true }));
+app.use(cors(buildCorsOptions()));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
