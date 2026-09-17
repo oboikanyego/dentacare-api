@@ -15,8 +15,5 @@ test('validates and normalizes required environment configuration', () => {
 });
 
 test('fails fast when required environment variables are missing', () => {
-  assert.throws(
-    () => validateRequiredEnvironment({ PORT: '3000' }),
-    /MONGO_URI, JWT_SECRET/
-  );
+  assert.throws(() => validateRequiredEnvironment({ PORT: '3000' }), /MONGO_URI, JWT_SECRET/);
 });

@@ -5,10 +5,7 @@ const { samplePassword, sampleUsers } = require('../src/utils/sample-users');
 test('sample accounts cover the main application roles', () => {
   const roles = new Set(sampleUsers.map((user) => user.role));
 
-  assert.deepEqual(
-    [...roles].sort(),
-    ['ADMIN', 'DENTIST', 'PATIENT', 'RECEPTIONIST'].sort()
-  );
+  assert.deepEqual([...roles].sort(), ['ADMIN', 'DENTIST', 'PATIENT', 'RECEPTIONIST'].sort());
 });
 
 test('sample accounts use reserved example addresses and unique identities', () => {

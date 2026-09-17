@@ -4,7 +4,9 @@ const MasterData = require('../models/MasterData');
 const router = express.Router();
 
 function normalizeSearch(value) {
-  return String(value || '').trim().toLowerCase();
+  return String(value || '')
+    .trim()
+    .toLowerCase();
 }
 
 function normalizeLimit(value, fallback = 20) {
