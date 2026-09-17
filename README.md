@@ -16,6 +16,7 @@ Backend REST API for the DentaCare clinic management platform. It supports patie
 ## Core capabilities
 
 ### Authentication
+
 - Patient registration and login
 - JWT-based sessions
 - Role-based access control
@@ -23,6 +24,7 @@ Backend REST API for the DentaCare clinic management platform. It supports patie
 - Forgot-password OTP and password reset
 
 ### Appointments
+
 - Public appointment requests
 - Patient-linked appointment creation
 - Protected staff appointment creation
@@ -35,6 +37,7 @@ Backend REST API for the DentaCare clinic management platform. It supports patie
 - Best-effort booking/cancellation email notifications
 
 ### Administration
+
 - List users
 - Create staff accounts
 - Update user details and roles
@@ -72,37 +75,37 @@ When running locally on the default port:
 
 ### Authentication
 
-| Method | Endpoint | Access |
-| --- | --- | --- |
-| POST | `/api/auth/register` | Public |
-| POST | `/api/auth/login` | Public |
-| POST | `/api/auth/forgot-password` | Public |
-| POST | `/api/auth/reset-password` | Public |
-| GET | `/api/auth/profile` | Authenticated |
+| Method | Endpoint                    | Access        |
+| ------ | --------------------------- | ------------- |
+| POST   | `/api/auth/register`        | Public        |
+| POST   | `/api/auth/login`           | Public        |
+| POST   | `/api/auth/forgot-password` | Public        |
+| POST   | `/api/auth/reset-password`  | Public        |
+| GET    | `/api/auth/profile`         | Authenticated |
 
 ### Appointments
 
-| Method | Endpoint | Access |
-| --- | --- | --- |
-| POST | `/api/appointments` | Public / optional auth |
-| POST | `/api/appointments/mine` | Patient |
-| GET | `/api/appointments/mine` | Patient |
-| PATCH | `/api/appointments/mine/:id` | Patient |
-| PATCH | `/api/appointments/mine/:id/cancel` | Patient |
-| GET | `/api/appointments` | Staff/Admin |
-| POST | `/api/appointments/staff` | Staff/Admin |
-| PATCH | `/api/appointments/:id` | Staff/Admin |
-| PATCH | `/api/appointments/:id/cancel` | Staff/Admin |
+| Method | Endpoint                            | Access                 |
+| ------ | ----------------------------------- | ---------------------- |
+| POST   | `/api/appointments`                 | Public / optional auth |
+| POST   | `/api/appointments/mine`            | Patient                |
+| GET    | `/api/appointments/mine`            | Patient                |
+| PATCH  | `/api/appointments/mine/:id`        | Patient                |
+| PATCH  | `/api/appointments/mine/:id/cancel` | Patient                |
+| GET    | `/api/appointments`                 | Staff/Admin            |
+| POST   | `/api/appointments/staff`           | Staff/Admin            |
+| PATCH  | `/api/appointments/:id`             | Staff/Admin            |
+| PATCH  | `/api/appointments/:id/cancel`      | Staff/Admin            |
 
 ### Users
 
-| Method | Endpoint | Access |
-| --- | --- | --- |
-| GET | `/api/users` | Admin |
-| POST | `/api/users` | Admin |
-| PATCH | `/api/users/:id` | Admin |
-| PATCH | `/api/users/:id/status` | Admin |
-| DELETE | `/api/users/:id` | Admin (soft deactivate) |
+| Method | Endpoint                | Access                  |
+| ------ | ----------------------- | ----------------------- |
+| GET    | `/api/users`            | Admin                   |
+| POST   | `/api/users`            | Admin                   |
+| PATCH  | `/api/users/:id`        | Admin                   |
+| PATCH  | `/api/users/:id/status` | Admin                   |
+| DELETE | `/api/users/:id`        | Admin (soft deactivate) |
 
 ## Testing and CI
 

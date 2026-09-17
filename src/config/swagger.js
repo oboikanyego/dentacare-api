@@ -85,8 +85,14 @@ module.exports = {
           slotId: { type: 'string' },
           time: { type: 'string', example: '10:00' },
           reason: { type: 'string' },
-          status: { type: 'string', enum: ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW'] },
-          bookedByRole: { type: 'string', enum: ['PUBLIC', 'PATIENT', 'RECEPTIONIST', 'DENTIST', 'ADMIN'] },
+          status: {
+            type: 'string',
+            enum: ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW']
+          },
+          bookedByRole: {
+            type: 'string',
+            enum: ['PUBLIC', 'PATIENT', 'RECEPTIONIST', 'DENTIST', 'ADMIN']
+          },
           bookedByUserId: { type: 'string', nullable: true },
           cancelledAt: { type: 'string', format: 'date-time', nullable: true },
           cancelledBy: { type: 'string', nullable: true },
@@ -97,7 +103,16 @@ module.exports = {
       },
       CreateAppointmentRequest: {
         type: 'object',
-        required: ['patientName', 'email', 'phone', 'date', 'time', 'serviceId', 'serviceName', 'slotId'],
+        required: [
+          'patientName',
+          'email',
+          'phone',
+          'date',
+          'time',
+          'serviceId',
+          'serviceName',
+          'slotId'
+        ],
         properties: {
           patientName: { type: 'string' },
           email: { type: 'string', format: 'email' },
@@ -526,7 +541,8 @@ module.exports = {
             in: 'query',
             name: 'keys',
             schema: { type: 'string' },
-            description: 'Comma-separated list of master-data keys, for example services,timeSlots,userRoles'
+            description:
+              'Comma-separated list of master-data keys, for example services,timeSlots,userRoles'
           }
         ],
         responses: {

@@ -68,7 +68,8 @@ const masterDataSeed = [
           specialization: 'Family Dentistry',
           email: 'maya.vale@dentacare.example',
           phone: '+27 10 000 0101',
-          image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80'
+          image:
+            'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80'
         }
       },
       {
@@ -79,7 +80,8 @@ const masterDataSeed = [
           specialization: 'Restorative Dentistry',
           email: 'theo.lane@dentacare.example',
           phone: '+27 10 000 0102',
-          image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=800&q=80'
+          image:
+            'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=800&q=80'
         }
       },
       {
@@ -90,7 +92,8 @@ const masterDataSeed = [
           specialization: 'Cosmetic Dentistry',
           email: 'zuri.hart@dentacare.example',
           phone: '+27 10 000 0103',
-          image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=800&q=80'
+          image:
+            'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=800&q=80'
         }
       }
     ]
@@ -109,11 +112,7 @@ const masterDataSeed = [
 
 async function seedMasterData() {
   for (const entry of masterDataSeed) {
-    await MasterData.updateOne(
-      { key: entry.key },
-      { $set: entry },
-      { upsert: true }
-    );
+    await MasterData.updateOne({ key: entry.key }, { $set: entry }, { upsert: true });
   }
 }
 

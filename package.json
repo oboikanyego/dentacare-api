@@ -7,6 +7,8 @@
     "start": "node src/server.js",
     "test": "node --test",
     "check": "node --check src/server.js && node --check src/app.js",
+    "format": "npx --yes prettier@3.6.2 --write \"src/**/*.js\" \"test/**/*.js\" \"*.json\" \"*.md\"",
+    "format:check": "npx --yes prettier@3.6.2 --check \"src/**/*.js\" \"test/**/*.js\" \"*.json\" \"*.md\"",
     "build:client": "cd ../client && npm run build",
     "start:full": "npm run build:client && npm run start"
   },
