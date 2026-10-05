@@ -1,0 +1,35 @@
+# Render Blueprint for the DentaCare API.
+# Secrets are marked `sync: false`: Render prompts for them in the dashboard,
+# so no secret values ever live in this repository.
+services:
+  - type: web
+    name: dentacare-api
+    runtime: node
+    region: oregon
+    plan: free
+    branch: main
+    autoDeploy: true
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: CORS_ORIGIN
+        value: https://dentacare-ec0038.netlify.app,https://main--dentacare-ec0038.netlify.app
+      - key: SAMPLE_USER_PASSWORD
+        sync: false
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
