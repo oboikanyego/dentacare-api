@@ -12,6 +12,7 @@ const appointmentRoutes = require('./routes/appointment.routes');
 const usersRoutes = require('./routes/users.routes');
 const masterDataRoutes = require('./routes/master-data.routes');
 const dentistRoutes = require('./routes/dentist.routes');
+const treatmentNotesRoutes = require('./routes/treatment-notes.routes');
 
 const app = express();
 const clientDistPath = path.resolve(__dirname, '../../client/dist/dentacare-angular/browser');
@@ -24,6 +25,7 @@ app.use('/api/appointments', sanitizeAppointmentCreationStatus, appointmentRoute
 app.use('/api/users', usersRoutes);
 app.use('/api/master-data', masterDataRoutes);
 app.use('/api/dentists', dentistRoutes);
+app.use('/api/treatment-notes', treatmentNotesRoutes);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
