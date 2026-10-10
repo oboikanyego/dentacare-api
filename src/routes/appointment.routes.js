@@ -345,6 +345,40 @@ router.get('/', authenticate, authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'), asy
   }
 });
 
+router.get(
+  '/:id',
+  authenticate,
+  authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'),
+  async (req, res) => {
+    try {
+      const appointment = await Appointment.findById(req.params.id).lean();
+      if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+      const User = require('../models/User');
+      const userIds = appointment.auditTrail
+        .filter((e) => e.byUserId)
+        .map((e) => e.byUserId.toString());
+      const uniqueIds = [...new Set(userIds)];
+      const users =
+        uniqueIds.length > 0
+          ? await User.find({ _id: { $in: uniqueIds } })
+              .select('_id name')
+              .lean()
+          : [];
+      const nameMap = Object.fromEntries(users.map((u) => [u._id.toString(), u.name]));
+
+      appointment.auditTrail = appointment.auditTrail.map((entry) => ({
+        ...entry,
+        byUserName: entry.byUserId ? (nameMap[entry.byUserId.toString()] ?? null) : null
+      }));
+
+      return res.json(appointment);
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+);
+
 router.post(
   '/staff',
   authenticate,
