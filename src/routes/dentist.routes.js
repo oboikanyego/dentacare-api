@@ -121,4 +121,36 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/dentists/{id}/availability:
+ *   get:
+ *     summary: Get a dentist's schedule / working days
+ *     tags: [Dentists]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Schedule info
+ *       404:
+ *         description: Dentist not found
+ */
+router.get('/:id/availability', async (req, res) => {
+  try {
+    const doc = await MasterData.findOne({ key: 'dentists' }).lean();
+    const item = (doc?.items || []).find(
+      (entry) => entry.value === req.params.id && entry.isActive !== false
+    );
+    if (!item) return res.status(404).json({ message: 'Dentist not found' });
+    const schedule = item?.metadata?.schedule || { workingDays: [1, 2, 3, 4, 5] };
+    return res.json({ dentistId: item.value, schedule });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
