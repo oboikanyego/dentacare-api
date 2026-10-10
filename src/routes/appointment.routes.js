@@ -44,7 +44,27 @@ function overlaps(startA, durationA, startB, durationB) {
   return startA < endB && startB < endA;
 }
 
+async function getDentistSchedule(dentistId) {
+  const MasterData = require('../models/MasterData');
+  const doc = await MasterData.findOne({ key: 'dentists' }).lean();
+  const item = (doc?.items || []).find((e) => e.value === dentistId);
+  return item?.metadata?.schedule || null;
+}
+
+async function ensureDentistAvailable(dentistId, date) {
+  const schedule = await getDentistSchedule(dentistId);
+  if (!schedule) return;
+  const { workingDays } = schedule;
+  if (!workingDays || workingDays.length === 0) return;
+  const dayOfWeek = new Date(date + 'T00:00:00').getDay();
+  if (!workingDays.includes(dayOfWeek)) {
+    throw new Error('Selected dentist does not work on this day');
+  }
+}
+
 async function ensureSlotAvailable({ date, time, dentistId, durationMinutes, excludeId = null }) {
+  await ensureDentistAvailable(dentistId, date);
+
   const query = {
     date,
     dentistId,
