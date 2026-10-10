@@ -165,4 +165,30 @@ router.get('/profile', authenticate, async (req, res) => {
   }
 });
 
+router.patch('/profile', authenticate, async (req, res) => {
+  try {
+    const allowedFields = ['name', 'phone'];
+    const updates = Object.fromEntries(
+      Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+    );
+
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ message: 'No updatable fields provided' });
+    }
+
+    const user = await User.findByIdAndUpdate(req.user.id, updates, {
+      new: true,
+      runValidators: true
+    }).select('-password -resetPasswordOtp -resetPasswordOtpExpiresAt');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.json({ message: 'Profile updated successfully', user });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

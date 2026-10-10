@@ -1,5 +1,6 @@
 const express = require('express');
 const MasterData = require('../models/MasterData');
+const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -73,6 +74,86 @@ router.get('/:key', async (req, res) => {
       description: doc.description,
       items: filterItems(doc.items, req.query.search, limit)
     });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+router.post('/:key/items', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const { value, label, metadata, sortOrder } = req.body;
+    if (!value || !label) {
+      return res.status(400).json({ message: 'value and label are required' });
+    }
+
+    const doc = await MasterData.findOne({ key: req.params.key });
+    if (!doc) {
+      return res.status(404).json({ message: 'Master data collection not found' });
+    }
+
+    const exists = doc.items.some((item) => item.value === value);
+    if (exists) {
+      return res.status(409).json({ message: 'An item with this value already exists' });
+    }
+
+    const maxSort = doc.items.reduce((max, item) => Math.max(max, item.sortOrder || 0), 0);
+    doc.items.push({
+      value,
+      label,
+      metadata: metadata || {},
+      sortOrder: sortOrder ?? maxSort + 1,
+      isActive: true
+    });
+    await doc.save();
+
+    return res
+      .status(201)
+      .json({ message: 'Item added successfully', key: doc.key, items: doc.items });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+router.patch('/:key/items/:value', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const doc = await MasterData.findOne({ key: req.params.key });
+    if (!doc) {
+      return res.status(404).json({ message: 'Master data collection not found' });
+    }
+
+    const item = doc.items.find((i) => i.value === req.params.value);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    const { label, metadata, sortOrder, isActive } = req.body;
+    if (label !== undefined) item.label = label;
+    if (metadata !== undefined) item.metadata = metadata;
+    if (sortOrder !== undefined) item.sortOrder = sortOrder;
+    if (isActive !== undefined) item.isActive = isActive;
+
+    await doc.save();
+    return res.json({ message: 'Item updated successfully', key: doc.key, items: doc.items });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+router.delete('/:key/items/:value', authenticate, authorize('ADMIN'), async (req, res) => {
+  try {
+    const doc = await MasterData.findOne({ key: req.params.key });
+    if (!doc) {
+      return res.status(404).json({ message: 'Master data collection not found' });
+    }
+
+    const item = doc.items.find((i) => i.value === req.params.value);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    item.isActive = false;
+    await doc.save();
+    return res.json({ message: 'Item deactivated successfully', key: doc.key });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
