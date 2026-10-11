@@ -117,4 +117,88 @@ router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
   }
 });
 
+function sanitiseMedicalProfile(body) {
+  const splitTrim = (v) =>
+    typeof v === 'string'
+      ? v
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : Array.isArray(v)
+        ? v.map((s) => String(s).trim()).filter(Boolean)
+        : [];
+
+  const allowed = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', ''];
+  const bloodType =
+    body.bloodType !== undefined && allowed.includes(body.bloodType) ? body.bloodType : undefined;
+
+  return {
+    ...(bloodType !== undefined && { 'medicalProfile.bloodType': bloodType }),
+    ...(body.allergies !== undefined && { 'medicalProfile.allergies': splitTrim(body.allergies) }),
+    ...(body.conditions !== undefined && {
+      'medicalProfile.conditions': splitTrim(body.conditions)
+    }),
+    ...(body.medications !== undefined && {
+      'medicalProfile.medications': splitTrim(body.medications)
+    }),
+    ...(body.notes !== undefined && { 'medicalProfile.notes': String(body.notes).trim() })
+  };
+}
+
+router.get('/me/medical-profile', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('medicalProfile').lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    return res.json(user.medicalProfile || {});
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+router.patch('/me/medical-profile', authenticate, async (req, res) => {
+  try {
+    const updates = sanitiseMedicalProfile(req.body);
+    const user = await User.findByIdAndUpdate(req.user.id, { $set: updates }, { new: true })
+      .select('medicalProfile')
+      .lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    return res.json(user.medicalProfile || {});
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+router.get(
+  '/:id/medical-profile',
+  authenticate,
+  authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id).select('medicalProfile').lean();
+      if (!user) return res.status(404).json({ message: 'Patient not found' });
+      return res.json(user.medicalProfile || {});
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+router.patch(
+  '/:id/medical-profile',
+  authenticate,
+  authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'),
+  async (req, res) => {
+    try {
+      const updates = sanitiseMedicalProfile(req.body);
+      const user = await User.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true })
+        .select('medicalProfile')
+        .lean();
+      if (!user) return res.status(404).json({ message: 'Patient not found' });
+      return res.json(user.medicalProfile || {});
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+);
+
 module.exports = router;
