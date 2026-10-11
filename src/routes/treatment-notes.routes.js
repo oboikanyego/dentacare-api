@@ -61,6 +61,42 @@ router.post('/', authenticate, authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'), as
   }
 });
 
+// GET /api/treatment-notes/follow-ups?days=7  — staff lists patients due for follow-up
+router.get(
+  '/follow-ups',
+  authenticate,
+  authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'),
+  async (req, res) => {
+    try {
+      const days = Math.min(Math.max(parseInt(req.query.days) || 7, 0), 90);
+      const today = new Date().toISOString().slice(0, 10);
+      const future = new Date();
+      future.setDate(future.getDate() + days);
+      const futureStr = future.toISOString().slice(0, 10);
+
+      // 30-day look-back for overdue follow-ups
+      const past = new Date();
+      past.setDate(past.getDate() - 30);
+      const pastStr = past.toISOString().slice(0, 10);
+
+      const notes = await TreatmentNote.find({
+        followUpDate: { $ne: null, $gte: pastStr, $lte: futureStr }
+      })
+        .sort({ followUpDate: 1 })
+        .lean();
+
+      const enriched = notes.map((n) => ({
+        ...n,
+        overdue: n.followUpDate < today
+      }));
+
+      return res.json(enriched);
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+);
+
 // GET /api/treatment-notes?email=  — staff lists notes for a patient by email
 router.get('/', authenticate, authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'), async (req, res) => {
   try {

@@ -160,6 +160,28 @@ async function sendTreatmentNoteCreatedEmail(note) {
   );
 }
 
+async function sendAppointmentReminderEmail(appointment) {
+  const subject = 'Reminder: your DentaCare appointment is tomorrow';
+  const html = `
+    <h2>Appointment reminder</h2>
+    <p>Hi ${appointment.patientName},</p>
+    <p>This is a friendly reminder that you have an appointment tomorrow.</p>
+    <p><strong>Service:</strong> ${appointment.serviceName}</p>
+    <p><strong>Dentist:</strong> ${appointment.dentistName || 'To be assigned'}</p>
+    <p><strong>Date:</strong> ${appointment.date}</p>
+    <p><strong>Time:</strong> ${appointment.time}</p>
+    <p><strong>Duration:</strong> ${appointment.durationMinutes || 30} minutes</p>
+    <p>If you need to cancel or reschedule, please contact us as soon as possible.</p>
+    <p>We look forward to seeing you!</p>
+  `;
+  const text = `Reminder: you have an appointment for ${appointment.serviceName} on ${appointment.date} at ${appointment.time}.`;
+
+  return sendBestEffort(
+    () => sendMail({ to: appointment.email, subject, html, text }),
+    'Appointment reminder email'
+  );
+}
+
 module.exports = {
   sendMail,
   sendBestEffort,
@@ -168,5 +190,6 @@ module.exports = {
   sendAppointmentRescheduledEmail,
   sendAppointmentConfirmedEmail,
   sendTreatmentNoteCreatedEmail,
-  sendPasswordResetOtpEmail
+  sendPasswordResetOtpEmail,
+  sendAppointmentReminderEmail
 };
