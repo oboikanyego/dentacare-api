@@ -117,6 +117,34 @@ router.delete('/:id', authenticate, authorize('ADMIN'), async (req, res) => {
   }
 });
 
+// GET /users/patients/search?q=  — staff looks up registered patients to pre-fill a booking
+router.get(
+  '/patients/search',
+  authenticate,
+  authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'),
+  async (req, res) => {
+    try {
+      const q = String(req.query.q || '').trim();
+      if (q.length < 2) return res.json([]);
+
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escaped, 'i');
+      const patients = await User.find({
+        role: 'PATIENT',
+        isActive: true,
+        $or: [{ name: regex }, { phone: regex }, { email: regex }]
+      })
+        .select('name email phone idNumber')
+        .limit(10)
+        .lean();
+
+      return res.json(patients);
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+);
+
 function sanitiseMedicalProfile(body) {
   const splitTrim = (v) =>
     typeof v === 'string'
