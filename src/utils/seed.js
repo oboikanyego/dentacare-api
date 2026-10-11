@@ -8,11 +8,16 @@ const masterDataSeed = [
     key: 'services',
     description: 'Dental services available for booking',
     items: [
-      { value: 'consultation', label: 'Dental Consultation', sortOrder: 1 },
-      { value: 'cleaning', label: 'Teeth Cleaning', sortOrder: 2 },
-      { value: 'whitening', label: 'Teeth Whitening', sortOrder: 3 },
-      { value: 'fillings', label: 'Dental Fillings', sortOrder: 4 },
-      { value: 'braces', label: 'Braces Consultation', sortOrder: 5 }
+      {
+        value: 'consultation',
+        label: 'Dental Consultation',
+        sortOrder: 1,
+        metadata: { price: 'R750' }
+      },
+      { value: 'cleaning', label: 'Teeth Cleaning', sortOrder: 2, metadata: { price: 'R750' } },
+      { value: 'whitening', label: 'Teeth Whitening', sortOrder: 3, metadata: { price: 'R2 500' } },
+      { value: 'fillings', label: 'Dental Fillings', sortOrder: 4, metadata: { price: 'R950' } },
+      { value: 'braces', label: 'Braces Consultation', sortOrder: 5, metadata: { price: 'R1 250' } }
     ]
   },
   {
