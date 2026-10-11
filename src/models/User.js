@@ -14,7 +14,18 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, trim: true },
     idNumber: { type: String, trim: true, default: '' },
     resetPasswordOtp: { type: String, default: null },
-    resetPasswordOtpExpiresAt: { type: Date, default: null }
+    resetPasswordOtpExpiresAt: { type: Date, default: null },
+    medicalProfile: {
+      bloodType: {
+        type: String,
+        enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', ''],
+        default: ''
+      },
+      allergies: [{ type: String, trim: true }],
+      conditions: [{ type: String, trim: true }],
+      medications: [{ type: String, trim: true }],
+      notes: { type: String, trim: true, default: '' }
+    }
   },
   { timestamps: true }
 );
