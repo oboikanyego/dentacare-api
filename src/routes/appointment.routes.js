@@ -209,6 +209,63 @@ async function createAppointment(payload) {
   return appointment;
 }
 
+router.get('/available-slots', async (req, res) => {
+  try {
+    const { dentistId, date, duration } = req.query;
+    if (!dentistId || !date) {
+      return res.status(400).json({ message: 'dentistId and date are required' });
+    }
+
+    if (!ensureFutureDate(date)) {
+      return res.json({ slots: [] });
+    }
+
+    try {
+      await ensureDentistAvailable(dentistId, date);
+    } catch (_) {
+      return res.json({ slots: [] });
+    }
+
+    const durationMins = Math.max(15, Math.min(120, parseInt(duration, 10) || 30));
+    const MasterData = require('../models/MasterData');
+    const slotsDoc = await MasterData.findOne({ key: 'timeSlots' }).lean();
+    const allSlots = (slotsDoc?.items || []).filter((s) => s.isActive !== false);
+
+    const existing = await Appointment.find({
+      dentistId,
+      date,
+      status: { $nin: ['CANCELLED', 'NO_SHOW'] }
+    }).lean();
+
+    const available = allSlots.filter((slot) => {
+      try {
+        const startMin = parseTimeString(slot.label);
+        const endMin = startMin + durationMins;
+        if (Math.floor(startMin / 60) < WORK_START || endMin > WORK_END * 60) return false;
+        for (const appt of existing) {
+          if (
+            overlaps(
+              startMin,
+              durationMins,
+              parseTimeString(appt.time),
+              Number(appt.durationMinutes || 30)
+            )
+          ) {
+            return false;
+          }
+        }
+        return true;
+      } catch (_) {
+        return false;
+      }
+    });
+
+    return res.json({ slots: available.map((s) => ({ slotId: s.value, time: s.label })) });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
 router.post('/', optionalAuthenticate, async (req, res) => {
   try {
     const payload = {
