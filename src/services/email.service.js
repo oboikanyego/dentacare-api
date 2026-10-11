@@ -96,10 +96,77 @@ async function sendPasswordResetOtpEmail({ name, email, otp }) {
   return sendMail({ to: email, subject, html, text });
 }
 
+async function sendAppointmentRescheduledEmail(appointment) {
+  const subject = 'Your DentaCare appointment has been rescheduled';
+  const html = `
+    <h2>Appointment rescheduled</h2>
+    <p>Hi ${appointment.patientName},</p>
+    <p>Your appointment has been updated. Here are your new details:</p>
+    <p><strong>Service:</strong> ${appointment.serviceName}</p>
+    <p><strong>Dentist:</strong> ${appointment.dentistName || 'To be assigned'}</p>
+    <p><strong>Date:</strong> ${appointment.date}</p>
+    <p><strong>Time:</strong> ${appointment.time}</p>
+    <p><strong>Duration:</strong> ${appointment.durationMinutes || 30} minutes</p>
+    <p>If you have any questions, please contact us.</p>
+  `;
+  const text = `Your appointment has been rescheduled to ${appointment.date} at ${appointment.time}.`;
+
+  return sendBestEffort(
+    () => sendMail({ to: appointment.email, subject, html, text }),
+    'Appointment reschedule email'
+  );
+}
+
+async function sendAppointmentConfirmedEmail(appointment) {
+  const subject = 'Your DentaCare appointment is confirmed';
+  const html = `
+    <h2>Appointment confirmed</h2>
+    <p>Hi ${appointment.patientName},</p>
+    <p>Your appointment has been confirmed.</p>
+    <p><strong>Service:</strong> ${appointment.serviceName}</p>
+    <p><strong>Dentist:</strong> ${appointment.dentistName || 'To be assigned'}</p>
+    <p><strong>Date:</strong> ${appointment.date}</p>
+    <p><strong>Time:</strong> ${appointment.time}</p>
+    <p>We look forward to seeing you.</p>
+  `;
+  const text = `Your appointment for ${appointment.serviceName} on ${appointment.date} at ${appointment.time} is confirmed.`;
+
+  return sendBestEffort(
+    () => sendMail({ to: appointment.email, subject, html, text }),
+    'Appointment confirmation email'
+  );
+}
+
+async function sendTreatmentNoteCreatedEmail(note) {
+  const subject = 'Your DentaCare treatment summary';
+  const html = `
+    <h2>Treatment summary</h2>
+    <p>Hi there,</p>
+    <p>A treatment note has been recorded for your visit on <strong>${note.date}</strong>.</p>
+    <p><strong>Service:</strong> ${note.serviceName}</p>
+    <p><strong>Dentist:</strong> ${note.dentistName}</p>
+    ${note.diagnosis ? `<p><strong>Diagnosis:</strong> ${note.diagnosis}</p>` : ''}
+    ${note.treatment ? `<p><strong>Treatment performed:</strong> ${note.treatment}</p>` : ''}
+    ${note.prescription ? `<p><strong>Prescription:</strong> ${note.prescription}</p>` : ''}
+    ${note.followUpDate ? `<p><strong>Follow-up date:</strong> ${note.followUpDate}</p>` : ''}
+    ${note.notes ? `<p><strong>Additional notes:</strong> ${note.notes}</p>` : ''}
+    <p>You can view your full treatment history by logging in to DentaCare.</p>
+  `;
+  const text = `Treatment summary for your visit on ${note.date} with ${note.dentistName}.`;
+
+  return sendBestEffort(
+    () => sendMail({ to: note.patientEmail, subject, html, text }),
+    'Treatment note email'
+  );
+}
+
 module.exports = {
   sendMail,
   sendBestEffort,
   sendAppointmentBookedEmail,
   sendAppointmentCancelledEmail,
+  sendAppointmentRescheduledEmail,
+  sendAppointmentConfirmedEmail,
+  sendTreatmentNoteCreatedEmail,
   sendPasswordResetOtpEmail
 };
