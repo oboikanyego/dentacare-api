@@ -3,12 +3,14 @@ const mongoose = require('mongoose');
 const app = require('./app');
 const { validateRequiredEnvironment } = require('./config/env');
 const { runSeed } = require('./utils/seed');
+const { scheduleReminders } = require('./jobs/appointment-reminders');
 
 async function startServer() {
   const { mongoUri, port } = validateRequiredEnvironment();
   await mongoose.connect(mongoUri);
   console.log('MongoDB connected');
   await runSeed();
+  scheduleReminders();
 
   const server = app.listen(port, () => console.log(`Server running on port ${port}`));
 
