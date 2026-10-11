@@ -3,7 +3,9 @@ const Appointment = require('../models/Appointment');
 const { authenticate, optionalAuthenticate, authorize } = require('../middleware/auth');
 const {
   sendAppointmentBookedEmail,
-  sendAppointmentCancelledEmail
+  sendAppointmentCancelledEmail,
+  sendAppointmentRescheduledEmail,
+  sendAppointmentConfirmedEmail
 } = require('../services/email.service');
 
 const router = express.Router();
@@ -435,6 +437,11 @@ router.patch(
         return res.status(404).json({ message: 'Appointment not found' });
       }
 
+      const originalDate = appointment.date;
+      const originalTime = appointment.time;
+      const originalDentistId = appointment.dentistId;
+      const originalStatus = appointment.status;
+
       const allowed = [
         'patientName',
         'phone',
@@ -486,6 +493,12 @@ router.patch(
         excludeId: appointment._id
       });
 
+      const dateChanged = req.body.date !== undefined && req.body.date !== originalDate;
+      const timeChanged = req.body.time !== undefined && req.body.time !== originalTime;
+      const dentistChanged =
+        req.body.dentistId !== undefined && req.body.dentistId !== originalDentistId;
+      const statusChanged = req.body.status !== undefined && req.body.status !== originalStatus;
+
       addAudit(appointment, {
         action: 'UPDATED',
         byUserId: req.user.id,
@@ -493,6 +506,13 @@ router.patch(
         note: req.body.auditNote || 'Appointment updated'
       });
       await appointment.save();
+
+      if (dateChanged || timeChanged || dentistChanged) {
+        await sendAppointmentRescheduledEmail(appointment);
+      } else if (statusChanged && appointment.status === 'CONFIRMED') {
+        await sendAppointmentConfirmedEmail(appointment);
+      }
+
       return res.json({ message: 'Appointment updated successfully', appointment });
     } catch (error) {
       return res
