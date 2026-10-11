@@ -3,6 +3,7 @@ const TreatmentNote = require('../models/TreatmentNote');
 const Appointment = require('../models/Appointment');
 const { authenticate, authorize } = require('../middleware/auth');
 const { sendTreatmentNoteCreatedEmail } = require('../services/email.service');
+const { notifyUser } = require('../services/notification.service');
 
 const router = express.Router();
 
@@ -46,6 +47,13 @@ router.post('/', authenticate, authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'), as
     });
 
     await sendTreatmentNoteCreatedEmail(note);
+    if (note.patientId) {
+      await notifyUser(note.patientId, {
+        type: 'TREATMENT_NOTE_CREATED',
+        title: 'Treatment note available',
+        message: `Your treatment note from ${note.date} by ${note.dentistName} has been added.`
+      });
+    }
 
     return res.status(201).json(note);
   } catch (error) {
