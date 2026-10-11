@@ -2,6 +2,7 @@ const express = require('express');
 const Invoice = require('../models/Invoice');
 const Appointment = require('../models/Appointment');
 const { authenticate, authorize } = require('../middleware/auth');
+const { notifyUser } = require('../services/notification.service');
 
 const router = express.Router();
 
@@ -63,6 +64,14 @@ router.post('/', authenticate, authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'), as
       createdByRole: req.user.role
     });
 
+    if (invoice.patientId) {
+      await notifyUser(invoice.patientId, {
+        type: 'INVOICE_CREATED',
+        title: 'New invoice issued',
+        message: `Invoice ${invoice.invoiceNumber} for R ${invoice.total.toFixed(2)} is now available.`
+      });
+    }
+
     return res.status(201).json(invoice);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -70,32 +79,27 @@ router.post('/', authenticate, authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'), as
 });
 
 // GET /api/invoices — staff lists invoices with optional filters
-router.get(
-  '/',
-  authenticate,
-  authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'),
-  async (req, res) => {
-    try {
-      const { email, patientId, status, dateFrom, dateTo } = req.query;
-      const filter = {};
+router.get('/', authenticate, authorize('RECEPTIONIST', 'DENTIST', 'ADMIN'), async (req, res) => {
+  try {
+    const { email, patientId, status, dateFrom, dateTo } = req.query;
+    const filter = {};
 
-      if (patientId) filter.patientId = patientId;
-      else if (email) filter.patientEmail = String(email).toLowerCase().trim();
+    if (patientId) filter.patientId = patientId;
+    else if (email) filter.patientEmail = String(email).toLowerCase().trim();
 
-      if (status) filter.status = status;
-      if (dateFrom || dateTo) {
-        filter.date = {};
-        if (dateFrom) filter.date.$gte = String(dateFrom);
-        if (dateTo) filter.date.$lte = String(dateTo);
-      }
-
-      const invoices = await Invoice.find(filter).sort({ createdAt: -1 }).limit(200);
-      return res.json(invoices);
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
+    if (status) filter.status = status;
+    if (dateFrom || dateTo) {
+      filter.date = {};
+      if (dateFrom) filter.date.$gte = String(dateFrom);
+      if (dateTo) filter.date.$lte = String(dateTo);
     }
+
+    const invoices = await Invoice.find(filter).sort({ createdAt: -1 }).limit(200);
+    return res.json(invoices);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
-);
+});
 
 // GET /api/invoices/mine — patient views own invoices
 router.get('/mine', authenticate, authorize('PATIENT'), async (req, res) => {
@@ -132,58 +136,48 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // PATCH /api/invoices/:id — staff updates notes or due date
-router.patch(
-  '/:id',
-  authenticate,
-  authorize('RECEPTIONIST', 'ADMIN'),
-  async (req, res) => {
-    try {
-      const invoice = await Invoice.findById(req.params.id);
-      if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
-      if (invoice.status === 'CANCELLED') {
-        return res.status(400).json({ message: 'Cannot modify a cancelled invoice' });
-      }
-
-      const allowed = ['notes', 'dueDate', 'status'];
-      for (const key of allowed) {
-        if (req.body[key] !== undefined) invoice[key] = req.body[key];
-      }
-      if (req.body.status === 'CANCELLED') {
-        invoice.paidAt = null;
-        invoice.paymentMethod = '';
-      }
-      await invoice.save();
-      return res.json(invoice);
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
+router.patch('/:id', authenticate, authorize('RECEPTIONIST', 'ADMIN'), async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+    if (invoice.status === 'CANCELLED') {
+      return res.status(400).json({ message: 'Cannot modify a cancelled invoice' });
     }
+
+    const allowed = ['notes', 'dueDate', 'status'];
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) invoice[key] = req.body[key];
+    }
+    if (req.body.status === 'CANCELLED') {
+      invoice.paidAt = null;
+      invoice.paymentMethod = '';
+    }
+    await invoice.save();
+    return res.json(invoice);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
-);
+});
 
 // PATCH /api/invoices/:id/pay — mark invoice as paid
-router.patch(
-  '/:id/pay',
-  authenticate,
-  authorize('RECEPTIONIST', 'ADMIN'),
-  async (req, res) => {
-    try {
-      const invoice = await Invoice.findById(req.params.id);
-      if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
-      if (invoice.status !== 'UNPAID') {
-        return res
-          .status(400)
-          .json({ message: `Invoice is already ${invoice.status.toLowerCase()}` });
-      }
-
-      invoice.status = 'PAID';
-      invoice.paidAt = new Date();
-      invoice.paymentMethod = req.body.paymentMethod || 'CASH';
-      await invoice.save();
-      return res.json(invoice);
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
+router.patch('/:id/pay', authenticate, authorize('RECEPTIONIST', 'ADMIN'), async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+    if (invoice.status !== 'UNPAID') {
+      return res
+        .status(400)
+        .json({ message: `Invoice is already ${invoice.status.toLowerCase()}` });
     }
+
+    invoice.status = 'PAID';
+    invoice.paidAt = new Date();
+    invoice.paymentMethod = req.body.paymentMethod || 'CASH';
+    await invoice.save();
+    return res.json(invoice);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
-);
+});
 
 module.exports = router;

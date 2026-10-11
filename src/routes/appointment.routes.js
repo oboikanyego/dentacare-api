@@ -7,6 +7,7 @@ const {
   sendAppointmentRescheduledEmail,
   sendAppointmentConfirmedEmail
 } = require('../services/email.service');
+const { notifyUser, notifyAllStaff } = require('../services/notification.service');
 
 const router = express.Router();
 const WORK_START = 9;
@@ -220,6 +221,16 @@ router.post('/', optionalAuthenticate, async (req, res) => {
     };
 
     const appointment = await createAppointment(payload);
+
+    if (appointment.status === 'PENDING') {
+      await notifyAllStaff({
+        type: 'APPOINTMENT_PENDING',
+        title: 'New booking request',
+        message: `${appointment.patientName} has requested an appointment on ${appointment.date} at ${appointment.time}.`,
+        appointmentId: appointment._id
+      });
+    }
+
     return res.status(201).json(appointment);
   } catch (error) {
     return res
@@ -292,6 +303,12 @@ router.patch('/mine/:id/cancel', authenticate, authorize('PATIENT'), async (req,
     await appointment.save();
 
     await sendAppointmentCancelledEmail(appointment);
+    await notifyAllStaff({
+      type: 'APPOINTMENT_CANCELLED',
+      title: 'Appointment cancelled by patient',
+      message: `${appointment.patientName} has cancelled their appointment on ${appointment.date} at ${appointment.time}.`,
+      appointmentId: appointment._id
+    });
 
     return res.json({ message: 'Appointment cancelled successfully', appointment });
   } catch (error) {
@@ -509,8 +526,33 @@ router.patch(
 
       if (dateChanged || timeChanged || dentistChanged) {
         await sendAppointmentRescheduledEmail(appointment);
+        if (appointment.patientId) {
+          await notifyUser(appointment.patientId, {
+            type: 'APPOINTMENT_RESCHEDULED',
+            title: 'Appointment rescheduled',
+            message: `Your appointment has been rescheduled to ${appointment.date} at ${appointment.time} with ${appointment.dentistName}.`,
+            appointmentId: appointment._id
+          });
+        }
       } else if (statusChanged && appointment.status === 'CONFIRMED') {
         await sendAppointmentConfirmedEmail(appointment);
+        if (appointment.patientId) {
+          await notifyUser(appointment.patientId, {
+            type: 'APPOINTMENT_CONFIRMED',
+            title: 'Appointment confirmed',
+            message: `Your appointment with ${appointment.dentistName} on ${appointment.date} at ${appointment.time} has been confirmed.`,
+            appointmentId: appointment._id
+          });
+        }
+      } else if (statusChanged && appointment.status === 'CANCELLED') {
+        if (appointment.patientId) {
+          await notifyUser(appointment.patientId, {
+            type: 'APPOINTMENT_CANCELLED',
+            title: 'Appointment cancelled',
+            message: `Your appointment with ${appointment.dentistName} on ${appointment.date} has been cancelled by the clinic.`,
+            appointmentId: appointment._id
+          });
+        }
       }
 
       return res.json({ message: 'Appointment updated successfully', appointment });
@@ -551,6 +593,14 @@ router.patch(
       await appointment.save();
 
       await sendAppointmentCancelledEmail(appointment);
+      if (appointment.patientId) {
+        await notifyUser(appointment.patientId, {
+          type: 'APPOINTMENT_CANCELLED',
+          title: 'Appointment cancelled',
+          message: `Your appointment with ${appointment.dentistName} on ${appointment.date} has been cancelled by the clinic.`,
+          appointmentId: appointment._id
+        });
+      }
 
       return res.json({ message: 'Appointment cancelled successfully', appointment });
     } catch (error) {
