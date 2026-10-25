@@ -6,8 +6,8 @@ const { runSeed } = require('./utils/seed');
 const { scheduleReminders } = require('./jobs/appointment-reminders');
 
 async function startServer() {
-  const { mongoUri, port } = validateRequiredEnvironment();
-  await mongoose.connect(mongoUri);
+  const { mongoUri, mongoDbName, port } = validateRequiredEnvironment();
+  await mongoose.connect(mongoUri, mongoDbName ? { dbName: mongoDbName } : {});
   console.log('MongoDB connected');
   await runSeed();
   scheduleReminders();
