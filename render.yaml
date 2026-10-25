@@ -13,8 +13,10 @@ services:
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
-      - key: MONGO_URI
+      - key: MONGODB_URI
         sync: false
+      - key: MONGODB_DB_NAME
+        sync: false # Must match the existing Atlas database before switching
       - key: JWT_SECRET
         sync: false
       - key: JWT_EXPIRES_IN
