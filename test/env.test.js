@@ -15,7 +15,10 @@ test('separates cluster URI and database name', () => {
   assert.equal(config.port, 4100);
 });
 test('supports old MONGO_URI temporarily', () => {
-  const config = validateRequiredEnvironment({ MONGO_URI: 'mongodb://localhost:27017/dentacare', JWT_SECRET: 'test' });
+  const config = validateRequiredEnvironment({
+    MONGO_URI: 'mongodb://localhost:27017/dentacare',
+    JWT_SECRET: 'test'
+  });
   assert.equal(config.mongoUri, 'mongodb://localhost:27017/dentacare');
   assert.equal(config.mongoDbName, undefined);
 });
